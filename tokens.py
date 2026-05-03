@@ -25,7 +25,7 @@ TOKENS = [
         "ticker": "BNB",
     },
     {
-        "coingecko_id": "backpack-exchange",
+        "coingecko_id": "backpack",
         "display_name": "Backpack",
         "ticker": "BP",
         "equity_valuation": {
