@@ -40,33 +40,33 @@ def fetch_ytd_change(coingecko_id, current_price):
 
 def fmt_price(price):
     if price >= 1000:
-        return f"${price:,.2f}"
+        return f"${price:,.0f}"
     if price >= 1:
-        return f"${price:.4f}"
-    return f"${price:.6f}"
+        return f"${price:.2f}"
+    return f"${price:.4f}"
 
 
 def fmt_pct(pct):
     if pct is None:
-        return "n/a"
+        return "  n/a"
     sign = "+" if pct >= 0 else ""
     return f"{sign}{pct:.1f}%"
 
 
-def equity_valuation(price, formula_cfg):
-    value = price / 0.2 * 1000
-    return f"{value:,.0f} {formula_cfg['unit']}"
-
-
 def build_message(market_data, ytd_data):
-    now = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
-    lines = [f"Crypto Update - {now}\n"]
+    now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    lines = [f"Crypto Update - {now}", ""]
+
+    lines.append(f"{'':4} {'Price':>9}  {'24h':>6}  {'1M':>6}  {'YTD':>6}")
+    lines.append("-" * 40)
 
     for token in TOKENS:
         cid = token["coingecko_id"]
         coin = market_data.get(cid)
+        ticker = token["ticker"]
+
         if coin is None:
-            lines.append(f"[!] {token['display_name']} - data unavailable\n")
+            lines.append(f"{ticker:<4}  unavailable")
             continue
 
         price = coin.get("current_price", 0)
@@ -74,16 +74,13 @@ def build_message(market_data, ytd_data):
         chg_30d = coin.get("price_change_percentage_30d_in_currency")
         chg_ytd = ytd_data.get(cid)
 
-        lines.append(f"{token['display_name']} ({token['ticker']})")
-        lines.append(f"  Price:  {fmt_price(price)}")
-        lines.append(f"  24h: {fmt_pct(chg_24h)}  |  1M: {fmt_pct(chg_30d)}  |  YTD: {fmt_pct(chg_ytd)}")
+        row = f"{ticker:<4} {fmt_price(price):>9}  {fmt_pct(chg_24h):>6}  {fmt_pct(chg_30d):>6}  {fmt_pct(chg_ytd):>6}"
+        lines.append(row)
 
         ev_cfg = token.get("equity_valuation")
         if ev_cfg:
-            ev_str = equity_valuation(price, ev_cfg)
-            lines.append(f"  {ev_cfg['label']}: {ev_str}")
-
-        lines.append("")
+            value = price / 0.2 * 1000
+            lines.append(f"     EV: ${value:,.0f}m")
 
     return "\n".join(lines)
 
